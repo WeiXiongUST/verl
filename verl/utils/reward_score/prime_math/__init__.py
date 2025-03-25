@@ -405,6 +405,7 @@ def match_answer(response):
 import math
 
 
+
 def compute_score(model_output: str, ground_truth: str) -> bool:
     model_output = str(model_output)
     ground_truth = str(ground_truth)
@@ -426,5 +427,10 @@ def compute_score(model_output: str, ground_truth: str) -> bool:
             is_correct = math_equal(extracted_model_output, ground_truth, timeout=True)
     except:
         is_correct = False
+    score_first_turn = 7.7
+    ###
+    # if only one turn or no final answer, 
+    # score_first_turn = -888888
+    ###
+    return is_correct, score_first_turn, extracted_model_output
 
-    return is_correct, format_correctness, extracted_model_output
