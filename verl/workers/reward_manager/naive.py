@@ -15,7 +15,19 @@
 from verl import DataProto
 from verl.utils.reward_score import _default_compute_score
 import torch
+import numpy as np
 
+def find_first_turn(responses_tensors):
+    index_first_turn = []
+    for res in responses_tensors:
+        tmp = None 
+        for t in range(len(res)):
+            if res[t] == 79075:
+                tmp = t
+                break 
+        index_first_turn.append(tmp)
+
+    return index_first_turn
 
 class NaiveRewardManager:
     """The reward manager.
@@ -72,7 +84,11 @@ class NaiveRewardManager:
         reward_tensor = torch.zeros_like(data.batch['responses'], dtype=torch.float32)
 
         already_print_data_sources = {}
-
+        response_ids = data.batch['responses']
+        # bz x max_len
+        print(response_ids.shape)
+        print(response_ids[0])
+        first_turn_idx = find_first_turn(response_ids)
         for i in range(len(data)):
             data_item = data[i]  # DataProtoItem
 
@@ -97,14 +113,24 @@ class NaiveRewardManager:
 
             extra_info = data_item.non_tensor_batch.get('extra_info', None)
 
-            score = self.compute_score(
+            score2, score = self.compute_score(
                 data_source=data_source,
                 solution_str=response_str,
                 ground_truth=ground_truth,
                 extra_info=extra_info,
             )
-            reward_tensor[i, valid_response_length - 1] = score
-
+            #print(score, score2)
+            ####
+            if first_turn_idx[i] is None:
+                reward_tensor[i, valid_response_length - 1] = score2
+            else:
+                first_turn = np.min([first_turn_idx[i], valid_response_length-1])
+                if score < - 10000:
+                    reward_tensor[i, valid_response_length - 1] = score2
+                else:
+                    reward_tensor[i, valid_response_length - 1] = score2 + 1.5 * (score2 - score)
+                    reward_tensor[i, first_turn] = score
+            ####
             if data_source not in already_print_data_sources:
                 already_print_data_sources[data_source] = 0
 
