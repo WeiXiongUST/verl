@@ -360,7 +360,10 @@ def _last_boxed_only_string(string):
     return string[left_brace_idx + 1:right_brace_idx].strip()
 
 def _first_boxed_only_string(string):
-    first_idx = string.find("<|im_start|>assistant") + len("<|im_start|>assistant")
+    if "<|im_start|>assistant" in string:
+        first_idx = string.find("<|im_start|>assistant") + len("<|im_start|>assistant")
+    else:
+        first_idx = 0
     tmp = string[first_idx:]
     idx = tmp.find("\\boxed")
     if idx < 0:
@@ -513,7 +516,10 @@ def compute_score(model_output: str, ground_truth: str) -> bool:
     model_output = str(model_output)
     ground_truth = str(ground_truth)
     #print(model_output)
-    first_idx = model_output.find("<|im_start|>assistant") + len("<|im_start|>assistant")
+    if "<|im_start|>assistant" in model_output:
+        first_idx = model_output.find("<|im_start|>assistant") + len("<|im_start|>assistant")
+    else:
+        first_idx = 0
     tmp_str = model_output[first_idx:]
     box_count = tmp_str.count("\\box")
     if box_count <= 1:
